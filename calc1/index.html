@@ -1,1 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Slope Calculator Between Two Points</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { font-family: sans-serif; max-width: 600px; margin: 1em auto; padding: 0 1em; }
+    h1 { text-align: center; }
+    .field { margin-bottom: 1em; }
+    label { display: block; margin-bottom: 0.3em; }
+    input, button { width: 100%; padding: 0.5em; font-size: 1em; box-sizing: border-box; }
+    button { cursor: pointer; margin-top: 0.5em; }
+    #results { font-size: 1.2em; margin-top: 1em; text-align: center; }
+    canvas { border: 1px solid #ccc; display: block; margin: 1em auto; }
+  </style>
+</head>
+<body>
+  <h1>Slope & Ratio Calculator</h1>
+  
+  <div class="field">
+    <label for="elev1">Elevation Point 1 (ft):</label>
+    <input type="number" id="elev1" step="any" placeholder="e.g. 100">
+  </div>
+  <div class="field">
+    <label for="elev2">Elevation Point 2 (ft):</label>
+    <input type="number" id="elev2" step="any" placeholder="e.g. 108">
+  </div>
+  <div class="field">
+    <label for="dist">Horizontal Distance Between Points (ft):</label>
+    <input type="number" id="dist" step="any" placeholder="e.g. 100">
+  </div>
+  <button id="calcBtn">Calculate Slope</button>
 
+  <div id="results">
+    <div>Slope (%): <span id="slopePct">—</span></div>
+    <div>Slope Ratio (1:X): <span id="slopeRatio">—</span></div>
+  </div>
+
+  <canvas id="slopeCanvas" width="500" height="300"></canvas>
+
+  <script>
+    const elev1Input = document.getElementById('elev1');
+    const elev2Input = document.getElementById('elev2');
+    const distInput  = document.getElementById('dist');
+    const calcBtn    = document.getElementById('calcBtn');
+    const pctSpan    = document.getElementById('slopePct');
+    const ratioSpan  = document.getElementById('slopeRatio');
+    const canvas     = document.getElementById('slopeCanvas');
+    const ctx        = canvas.getContext('2d');
+
+    function drawLine(run, rise) {
+      const w = canvas.width, h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+      // axes
+      ctx.beginPath(); ctx.moveTo(40, h-40); ctx.lineTo(w-20, h-40);
+      ctx.moveTo(40, h-40); ctx.lineTo(40, 20);
+      ctx.strokeStyle = '#000'; ctx.stroke();
+
+      if (run <= 0) return;
+      // scales
+      const xScale = (w - 60) / run;
+      const yScale = (h - 60) / run; // uniform scale for 45º aspect
+      // draw ramp
+      ctx.beginPath(); ctx.moveTo(40, h-40);
+      ctx.lineTo(40 + run * xScale, h-40 - rise * yScale);
+      ctx.strokeStyle = '#007bff'; ctx.lineWidth = 2; ctx.stroke();
+      // endpoints
+      ctx.fillStyle = '#007bff';
+      ctx.beginPath(); ctx.arc(40, h-40, 5, 0, 2*Math.PI); ctx.fill();
+      ctx.beginPath(); ctx.arc(40 + run*xScale, h-40 - rise*yScale, 5, 0, 2*Math.PI); ctx.fill();
+      // labels
+      ctx.fillStyle = '#000'; ctx.font = '12px sans-serif';
+      ctx.fillText(`P1 (0, ${parseFloat(elev1Input.value).toFixed(2)})`, 40, h-20);
+      ctx.fillText(
+        `P2 (${run.toFixed(2)}, ${(parseFloat(elev1Input.value)+rise).toFixed(2)})`, 
+        40 + run*xScale - 60, h-40 - rise*yScale - 10
+      );
+    }
+
+    calcBtn.addEventListener('click', () => {
+      const e1 = parseFloat(elev1Input.value);
+      const e2 = parseFloat(elev2Input.value);
+      const run = parseFloat(distInput.value);
+      if (isNaN(e1) || isNaN(e2) || isNaN(run) || run <= 0) {
+        pctSpan.textContent = '—';
+        ratioSpan.textContent = '—';
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        return;
+      }
+      const rise = e2 - e1;
+      const slopePct = (rise/run)*100;
+      const ratio = (run/rise);
+      pctSpan.textContent = slopePct.toFixed(2) + ' %';
+      ratioSpan.textContent = `1:${ratio.toFixed(2)}`;
+      drawLine(run, rise);
+    });
+  </script>
+</body>
+</html>
