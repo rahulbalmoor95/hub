@@ -1,1 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Ramp Elevation Calculator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { font-family: sans-serif; max-width: 600px; margin: 1em auto; padding: 0 1em; }
+    h1 { text-align: center; }
+    .field { margin-bottom: 1em; }
+    label { display: block; margin-bottom: 0.3em; }
+    input, button { width: 100%; padding: 0.5em; font-size: 1em; box-sizing: border-box; }
+    button { cursor: pointer; margin-top: 0.5em; }
+    #result { font-size: 1.2em; margin-top: 1em; text-align: center; }
+    canvas { border: 1px solid #ccc; display: block; margin: 1em auto; }
+  </style>
+</head>
+<body>
+  <h1>Ramp Elevation Calculator</h1>
+  <div class="field">
+    <label for="startElev">Start Elevation (ft):</label>
+    <input type="number" id="startElev" step="any" placeholder="e.g. 0">
+  </div>
+  <div class="field">
+    <label for="slopePct">Slope (%):</label>
+    <input type="number" id="slopePct" step="any" placeholder="e.g. 8">
+  </div>
+  <div class="field">
+    <label for="distance">Distance (ft):</label>
+    <input type="number" id="distance" step="any" placeholder="e.g. 10">
+  </div>
+  <button id="computeBtn">Compute End Elevation</button>
+  <div id="result">End Elevation: — ft</div>
+  <canvas id="rampCanvas" width="500" height="300"></canvas>
 
+  <script>
+    const startInput = document.getElementById('startElev');
+    const slopeInput = document.getElementById('slopePct');
+    const distInput = document.getElementById('distance');
+    const btn = document.getElementById('computeBtn');
+    const resultDiv = document.getElementById('result');
+    const canvas = document.getElementById('rampCanvas');
+    const ctx = canvas.getContext('2d');
+
+    function drawLine(run, rise, startElev) {
+      const w = canvas.width, h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+      // axes
+      ctx.beginPath(); ctx.moveTo(40, h-40); ctx.lineTo(w-20, h-40); ctx.moveTo(40, h-40); ctx.lineTo(40, 20);
+      ctx.strokeStyle = '#000'; ctx.stroke();
+      if (run <= 0) return;
+      // scales
+      const xScale = (w - 60) / run;
+      const yScale = (h - 60) / rise;
+      // line
+      ctx.beginPath(); ctx.moveTo(40, h-40);
+      ctx.lineTo(40 + run * xScale, h-40 - rise * yScale);
+      ctx.strokeStyle = '#007bff'; ctx.lineWidth = 2; ctx.stroke();
+      // points
+      ctx.fillStyle = '#007bff';
+      ctx.beginPath(); ctx.arc(40, h-40, 5, 0, 2*Math.PI); ctx.fill();
+      ctx.beginPath(); ctx.arc(40 + run*xScale, h-40 - rise*yScale, 5, 0, 2*Math.PI); ctx.fill();
+      // labels
+      ctx.fillStyle = '#000'; ctx.font = '12px sans-serif';
+      ctx.fillText(`Start (0, ${startElev.toFixed(2)})`, 10, h-20);
+      ctx.fillText(`End (${run.toFixed(2)}, ${(startElev + rise).toFixed(2)})`, w-150, 30);
+    }
+
+    btn.addEventListener('click', () => {
+      const start = parseFloat(startInput.value);
+      const slope = parseFloat(slopeInput.value);
+      const dist = parseFloat(distInput.value);
+      if (isNaN(start) || isNaN(slope) || isNaN(dist) || dist <= 0) {
+        resultDiv.textContent = 'End Elevation: — ft';
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        return;
+      }
+      const rise = (slope/100) * dist;
+      const endElev = start + rise;
+      resultDiv.textContent = `End Elevation: ${endElev.toFixed(2)} ft`;
+      drawLine(dist, rise, start);
+    });
+  </script>
+</body>
+</html>
